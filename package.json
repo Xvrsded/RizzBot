@@ -1,0 +1,32 @@
+{
+  "name": "rizzbot",
+  "version": "1.0.0",
+  "description": "Discord Bot Management System for Roblox store operations",
+  "main": "dist/bot/index.js",
+  "scripts": {
+    "bot": "tsx bot/index.ts",
+    "dev:bot": "tsx watch bot/index.ts",
+    "deploy:commands": "tsx scripts/deploy-commands.ts",
+    "deploy:commands:prod": "npm run build && node dist/scripts/deploy-commands.js",
+    "build": "tsc",
+    "start": "node dist/bot/index.js"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "typescript",
+    "mongodb"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0",
+    "mongoose": "^8.14.0",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
