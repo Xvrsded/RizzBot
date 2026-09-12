@@ -1,5 +1,5 @@
 import type { APIEmbedField } from "discord.js";
-import { ROBUX_RATE_IDR } from "../../shared/products";
+import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../shared/products";
 import { GIFT_PAYMENT_METHODS } from "../../shared/payment-methods";
 import { formatIdr } from "./pricing";
 const CODE_BLOCK = (content: string): string => `\`\`\`text\n${content}\n\`\`\``;
@@ -43,8 +43,13 @@ export function formatGiftValue(robuxAmount: number): string {
   return CODE_BLOCK(padColumns("Robux", robuxAmount.toLocaleString("id-ID")));
 }
 
-export function formatGiftPayment(robuxAmount: number, rawPrice: number, finalPrice: number): string {
-  const rateLabel = `${robuxAmount} Robux × ${formatIdr(ROBUX_RATE_IDR)}`;
+export function formatGiftPayment(
+  robuxAmount: number,
+  rawPrice: number,
+  finalPrice: number,
+  pricing: GigPricingConfig = DEFAULT_GIG_PRICING,
+): string {
+  const rateLabel = `${robuxAmount} Robux × ${formatIdr(pricing.rateIdr)}`;
   const adjustment = finalPrice - rawPrice;
 
   const lines = [`${rateLabel.padEnd(22)}${formatIdr(rawPrice)}`];

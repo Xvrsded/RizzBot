@@ -4,7 +4,7 @@ import {
   ButtonStyle,
   EmbedBuilder,
 } from "discord.js";
-import { ROBUX_RATE_IDR } from "../../../shared/products";
+import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../../shared/products";
 import {
   SERVICE_LABELS,
   SERVICE_STATUS_KEYS,
@@ -52,6 +52,7 @@ function buildToggleButton(key: ServiceStatusKey, enabled: boolean): ButtonBuild
 export function buildDashboardEmbed(
   statuses: ServiceStatusMap,
   stats: DashboardStats,
+  pricing: GigPricingConfig = DEFAULT_GIG_PRICING,
 ): EmbedBuilder {
   const statusLines = SERVICE_STATUS_KEYS.map((key) => formatStatusLine(key, statuses[key]));
 
@@ -71,7 +72,7 @@ export function buildDashboardEmbed(
         name: "📊 SYSTEM INFORMATION",
         value: [
           `• Kategori Aktif: **${stats.activeCategories} / ${stats.totalCategories}**`,
-          `• GIG Rate: **Rp${ROBUX_RATE_IDR} / Robux**`,
+          `• GIG Rate: **Rp${pricing.rateIdr.toLocaleString("id-ID")} / Robux**`,
           `• Ticket Aktif: **${stats.activeTickets}**`,
           `• Order Hari Ini: **${stats.ordersToday}**`,
           "",

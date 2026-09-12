@@ -1,4 +1,4 @@
-import { PRICE_ROUNDING_IDR, ROBUX_RATE_IDR } from "../../shared/products";
+import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../shared/products";
 
 export interface GiftInGamePriceResult {
   robuxAmount: number;
@@ -6,9 +6,12 @@ export interface GiftInGamePriceResult {
   finalPrice: number;
 }
 
-export function calculateGiftInGamePrice(robuxAmount: number): GiftInGamePriceResult {
-  const rawPrice = robuxAmount * ROBUX_RATE_IDR;
-  const finalPrice = Math.ceil(rawPrice / PRICE_ROUNDING_IDR) * PRICE_ROUNDING_IDR;
+export function calculateGiftInGamePrice(
+  robuxAmount: number,
+  pricing: GigPricingConfig = DEFAULT_GIG_PRICING,
+): GiftInGamePriceResult {
+  const rawPrice = robuxAmount * pricing.rateIdr;
+  const finalPrice = Math.ceil(rawPrice / pricing.roundingIdr) * pricing.roundingIdr;
 
   return { robuxAmount, rawPrice, finalPrice };
 }

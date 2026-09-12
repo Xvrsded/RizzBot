@@ -8,6 +8,7 @@ import {
   type GiftOrderSessionDocument,
 } from "../../database/models/gift-order-session.model";
 import type { RobloxUserLookupResult } from "./roblox.service";
+import { guildConfigService } from "./guild-config.service";
 
 export interface GiftOrderFormInput {
   gameName: string;
@@ -115,7 +116,8 @@ export const giftOrderSessionService = {
   },
 
   async createSession(payload: GiftOrderSessionPayload): Promise<GiftOrderSessionDocument> {
-    const pricing = calculateGiftInGamePrice(payload.robuxAmount);
+    const gigPricing = await guildConfigService.getGigPricing(payload.guildId);
+    const pricing = calculateGiftInGamePrice(payload.robuxAmount, gigPricing);
 
     return giftOrderSessionRepository.create({
       sessionId: randomUUID(),
@@ -131,6 +133,7 @@ export const giftOrderSessionService = {
       robloxAvatarUrl: payload.robloxUser.avatarUrl,
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
+      rateIdr: gigPricing.rateIdr,
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });
@@ -140,7 +143,8 @@ export const giftOrderSessionService = {
     sessionId: string,
     payload: GiftOrderSessionPayload,
   ): Promise<GiftOrderSessionDocument | null> {
-    const pricing = calculateGiftInGamePrice(payload.robuxAmount);
+    const gigPricing = await guildConfigService.getGigPricing(payload.guildId);
+    const pricing = calculateGiftInGamePrice(payload.robuxAmount, gigPricing);
 
     return giftOrderSessionRepository.updateBySessionId(sessionId, {
       gameName: payload.gameName.trim(),
@@ -152,6 +156,7 @@ export const giftOrderSessionService = {
       robloxAvatarUrl: payload.robloxUser.avatarUrl,
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
+      rateIdr: gigPricing.rateIdr,
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });

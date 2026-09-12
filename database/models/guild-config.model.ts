@@ -3,6 +3,7 @@ import type { ServiceStatusMap } from "../../shared/service-status";
 import { DEFAULT_SERVICE_STATUS } from "../../shared/service-status";
 import type { RizzStoreConfig } from "../../shared/rizz-store";
 import { DEFAULT_RIZZ_STORE_CONFIG } from "../../shared/rizz-store";
+import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../shared/products";
 
 export interface GuildInventory {
   stockViaSend: number;
@@ -15,6 +16,7 @@ export interface IGuildConfig {
   dashboardChannelId: string | null;
   dashboardMessageId: string | null;
   dashboardLastUpdatedAt: Date | null;
+  gigPricing: GigPricingConfig;
   serviceStatus: ServiceStatusMap;
   inventory: GuildInventory;
   rizzStore: RizzStoreConfig;
@@ -42,6 +44,10 @@ const guildConfigSchema = new Schema<GuildConfigDocument>(
     dashboardChannelId: { type: String, default: null },
     dashboardMessageId: { type: String, default: null },
     dashboardLastUpdatedAt: { type: Date, default: null },
+    gigPricing: {
+      rateIdr: { type: Number, default: DEFAULT_GIG_PRICING.rateIdr },
+      roundingIdr: { type: Number, default: DEFAULT_GIG_PRICING.roundingIdr },
+    },
     serviceStatus: {
       robuxLogin: { type: Boolean, default: DEFAULT_SERVICE_STATUS.robuxLogin },
       robuxSend: { type: Boolean, default: DEFAULT_SERVICE_STATUS.robuxSend },

@@ -4,7 +4,7 @@ import {
   ButtonStyle,
   EmbedBuilder,
 } from "discord.js";
-import { PRICE_ROUNDING_IDR, ROBUX_RATE_IDR } from "../../../shared/products";
+import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../../shared/products";
 import { buildCustomId } from "../../interactions/custom-id";
 import { formatIdr } from "../pricing";
 import {
@@ -24,6 +24,7 @@ export interface GiftOrderEmbedData {
   robuxAmount: number;
   rawPrice: number;
   finalPrice: number;
+  rateIdr?: number;
   robloxUsername: string;
   robloxDisplayName: string;
   robloxAvatarUrl: string | null;
@@ -49,7 +50,7 @@ function buildOrderDescription(orderCode: string, status: GiftOrderStatus, hint:
   return [formatOrderCodeLabel(orderCode), STATUS_LABEL[status], "", hint].join("\n");
 }
 
-export function buildGiftPanelEmbed(): EmbedBuilder {
+export function buildGiftPanelEmbed(pricing: GigPricingConfig = DEFAULT_GIG_PRICING): EmbedBuilder {
   return createBaseEmbed("🎁 GIFT IN GAME", EMBED_COLORS.gift).setDescription(
     [
       "Pesan Gamepass Roblox yang mendukung fitur gifting — tanpa perlu memiliki Robux sendiri.",
@@ -57,9 +58,9 @@ export function buildGiftPanelEmbed(): EmbedBuilder {
       "━━━━━━━━━━━━━━━━━━━━",
       "",
       `💎 **RATE**`,
-      `1 Robux = ${formatIdr(ROBUX_RATE_IDR)}`,
+      `1 Robux = ${formatIdr(pricing.rateIdr)}`,
       "",
-      `Pembayaran dibulatkan ke atas ke kelipatan ${formatIdr(PRICE_ROUNDING_IDR)}.`,
+      `Pembayaran dibulatkan ke atas ke kelipatan ${formatIdr(pricing.roundingIdr)}.`,
       "",
       "━━━━━━━━━━━━━━━━━━━━",
       "",
@@ -100,7 +101,10 @@ export function buildGiftOrderPreviewEmbed(data: GiftOrderEmbedData): EmbedBuild
       { name: "💎 VALUE", value: formatGiftValue(data.robuxAmount), inline: true },
       {
         name: "💰 RINGKASAN PEMBAYARAN",
-        value: formatGiftPayment(data.robuxAmount, data.rawPrice, data.finalPrice),
+        value: formatGiftPayment(data.robuxAmount, data.rawPrice, data.finalPrice, {
+          rateIdr: data.rateIdr ?? DEFAULT_GIG_PRICING.rateIdr,
+          roundingIdr: DEFAULT_GIG_PRICING.roundingIdr,
+        }),
         inline: false,
       },
     );

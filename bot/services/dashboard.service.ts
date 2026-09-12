@@ -53,9 +53,10 @@ export const dashboardService = {
     const config = await guildConfigService.getGuildConfig(guildId);
     const lastUpdate = config?.dashboardLastUpdatedAt ?? new Date();
     const stats = await buildDashboardStats(guildId, lastUpdate);
+    const gigPricing = guildConfigService.normalizeGigPricing(config);
 
     return {
-      embed: buildDashboardEmbed(statuses, stats),
+      embed: buildDashboardEmbed(statuses, stats, gigPricing),
       rows: buildDashboardRows(statuses),
       statuses,
       stats,

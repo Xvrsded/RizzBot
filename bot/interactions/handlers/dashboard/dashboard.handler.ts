@@ -24,6 +24,13 @@ import {
 } from "../../../utils/embeds/inventory.embed";
 import { parseInventoryAmount } from "../../../utils/format-inventory";
 import { replyEmbedEphemeral } from "../../../utils/reply";
+import { parseIdrAmount } from "../../../utils/pricing";
+import {
+  buildGigPricingInvalidEmbed,
+  buildGigPricingModal,
+  buildGigPricingSavedEmbed,
+  extractGigPricingModalInput,
+} from "../../../utils/embeds/gig-pricing.embed";
 import { logger } from "../../../../shared/logger";
 
 const STUB_LABELS: Record<string, string> = {
@@ -73,6 +80,12 @@ export async function handleDashboardButton(
   }
 
   if (parsed.action === "stub") {
+    if (parsed.id === "gig-config") {
+      const pricing = await guildConfigService.getGigPricing(guildId);
+      await interaction.showModal(buildGigPricingModal(pricing));
+      return;
+    }
+
     await replyEmbedEphemeral(
       interaction,
       buildDashboardStubEmbed(STUB_LABELS[parsed.id ?? ""] ?? "Management"),
@@ -164,7 +177,7 @@ export async function handleDashboardModal(
   interaction: ModalSubmitInteraction,
   parsed: ParsedCustomId,
 ): Promise<void> {
-  if (!interaction.inGuild() || !interaction.guild || parsed.action !== "inventory-save") {
+  if (!interaction.inGuild() || !interaction.guild) {
     await replyEmbedEphemeral(interaction, buildServiceUnavailableEmbed());
     return;
   }
@@ -174,6 +187,43 @@ export async function handleDashboardModal(
   }
 
   const guildId = interaction.guild.id;
+
+  if (parsed.action === "gig-pricing-save") {
+    const { rateRaw, roundingRaw } = extractGigPricingModalInput(interaction);
+    const rateIdr = parseIdrAmount(rateRaw);
+    const roundingIdr = parseIdrAmount(roundingRaw);
+
+    if (rateIdr === null || roundingIdr === null) {
+      await replyEmbedEphemeral(interaction, buildGigPricingInvalidEmbed());
+      return;
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    const pricing = await guildConfigService.updateGigPricing(guildId, {
+      rateIdr,
+      roundingIdr,
+    });
+
+    if (!pricing) {
+      await interaction.editReply({ embeds: [buildServiceUnavailableEmbed()] });
+      return;
+    }
+
+    await dashboardService.refreshDashboard(interaction.client, guildId);
+    await productPanelService.restoreGiftInGamePanel(interaction.client);
+    await interaction.editReply({ embeds: [buildGigPricingSavedEmbed(pricing)] });
+    logger.dashboard(
+      `GIG pricing updated by ${interaction.user.id} in guild ${guildId} (rate=${rateIdr}, rounding=${roundingIdr})`,
+    );
+    return;
+  }
+
+  if (parsed.action !== "inventory-save") {
+    await replyEmbedEphemeral(interaction, buildServiceUnavailableEmbed());
+    return;
+  }
+
   const { stockViaSendRaw, stockGigRaw } = extractInventoryModalInput(interaction);
   const stockViaSend = parseInventoryAmount(stockViaSendRaw);
   const stockGig = parseInventoryAmount(stockGigRaw);

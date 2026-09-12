@@ -48,6 +48,7 @@ function sessionToEmbedData(session: {
   robuxAmount: number;
   rawPrice: number;
   finalPrice: number;
+  rateIdr?: number;
   robloxUsername: string;
   robloxDisplayName: string;
   robloxAvatarUrl: string | null;
@@ -59,6 +60,7 @@ function sessionToEmbedData(session: {
     robuxAmount: session.robuxAmount,
     rawPrice: session.rawPrice,
     finalPrice: session.finalPrice,
+    rateIdr: session.rateIdr,
     robloxUsername: session.robloxUsername,
     robloxDisplayName: session.robloxDisplayName,
     robloxAvatarUrl: session.robloxAvatarUrl,

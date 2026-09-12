@@ -25,6 +25,7 @@ import { buildLimitedPanelEmbed, buildLimitedPanelRow } from "../utils/embeds/li
 import { buildItemTumbalPanelEmbeds } from "../utils/embeds/item-tumbal.embed";
 import { logger } from "../../shared/logger";
 import type { Client, TextChannel } from "discord.js";
+import { guildConfigService } from "./guild-config.service";
 async function findTextChannel(
   client: Client<true>,
   channelId: string,
@@ -43,7 +44,9 @@ async function restoreProductPanel(
   productType: ProductPanelKey,
   defaultChannelId: string,
   label: string,
-  buildEmbed: () => ReturnType<typeof buildGiftPanelEmbed>,
+  buildEmbed: (
+    guildId: string,
+  ) => ReturnType<typeof buildGiftPanelEmbed> | Promise<ReturnType<typeof buildGiftPanelEmbed>>,
   buildRow: () => ReturnType<typeof buildGiftInGamePanelRow>,
 ): Promise<void> {
   const guilds = [...client.guilds.cache.values()];
@@ -59,7 +62,7 @@ async function restoreProductPanel(
         continue;
       }
 
-      const embed = buildEmbed();
+      const embed = await buildEmbed(guild.id);
       const row = buildRow();
 
       if (record) {
@@ -145,7 +148,7 @@ export const productPanelService = {
       ProductType.GIFT_IN_GAME,
       GIFT_IN_GAME_CHANNEL_ID,
       "Gift In Game",
-      buildGiftPanelEmbed,
+      async (guildId) => buildGiftPanelEmbed(await guildConfigService.getGigPricing(guildId)),
       buildGiftInGamePanelRow,
     );
   },
