@@ -16,7 +16,7 @@ export const giftOrderSessionRepository = {
 
   async updateBySessionId(
     sessionId: string,
-    data: Partial<Pick<IGiftOrderSession, "gameName" | "gamepassName" | "robuxAmount" | "robloxUserId" | "robloxUsername" | "robloxDisplayName" | "robloxAvatarUrl" | "rawPrice" | "finalPrice" | "status" | "expiresAt">>,
+    data: Partial<Pick<IGiftOrderSession, "gameName" | "gamepassName" | "robuxAmount" | "robloxUserId" | "robloxUsername" | "robloxDisplayName" | "robloxAvatarUrl" | "rawPrice" | "finalPrice" | "rateIdr" | "status" | "expiresAt">>,
   ): Promise<GiftOrderSessionDocument | null> {
     return GiftOrderSessionModel.findOneAndUpdate({ sessionId }, { $set: data }, { new: true }).exec();
   },
