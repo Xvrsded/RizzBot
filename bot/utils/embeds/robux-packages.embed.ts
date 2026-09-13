@@ -18,7 +18,7 @@ export function buildRobuxPackagesModal(packages: readonly RobuxPackage[]): Moda
   const packagesInput = new TextInputBuilder()
     .setCustomId("robux_packages")
     .setLabel("Paket Robux = Harga Rupiah")
-    .setPlaceholder("100=15500\n200=31000\n300=46500")
+    .setPlaceholder("50⏣ = 9000\n100⏣ = 16000\n1.000⏣ = 160000")
     .setStyle(TextInputStyle.Paragraph)
     .setRequired(true)
     .setMaxLength(1500)
@@ -39,7 +39,7 @@ export function extractRobuxPackagesModalInput(interaction: {
 export function buildRobuxPackagesInvalidEmbed(): ReturnType<typeof createErrorEmbed> {
   return createErrorEmbed(
     "PAKET TIDAK VALID",
-    "Gunakan format satu paket per baris: jumlah Robux=harga Rupiah. Jumlah Robux tidak boleh duplikat.",
+    "Gunakan format satu paket per baris, contoh: 1.000⏣ = 160000. Jumlah Robux tidak boleh duplikat.",
   ).setFooter(PACKAGES_FOOTER);
 }
 

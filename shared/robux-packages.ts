@@ -38,7 +38,7 @@ export function normalizeRobuxPackages(packages: readonly RobuxPackage[] | null 
 
 export function formatRobuxPackages(packages: readonly RobuxPackage[]): string {
   return normalizeRobuxPackages(packages)
-    .map((pkg) => `${pkg.robuxAmount}=${pkg.priceIdr}`)
+    .map((pkg) => `${pkg.robuxAmount.toLocaleString("id-ID")}⏣ = ${pkg.priceIdr}`)
     .join("\n");
 }
 
@@ -55,13 +55,13 @@ export function parseRobuxPackages(input: string): RobuxPackage[] | null {
   const packages: RobuxPackage[] = [];
 
   for (const line of lines) {
-    const match = line.match(/^(\d+)\s*[=:]\s*([\d.\s,]+)$/);
+    const match = line.match(/^([\d.\s,]+)\s*⏣?\s*[=:]\s*([\d.\s,]+)$/i);
 
     if (!match) {
       return null;
     }
 
-    const robuxAmount = Number.parseInt(match[1], 10);
+    const robuxAmount = Number.parseInt(match[1].replace(/[.\s,]/g, ""), 10);
     const priceIdr = Number.parseInt(match[2].replace(/[.\s,]/g, ""), 10);
 
     if (!Number.isInteger(robuxAmount) || robuxAmount <= 0 || !Number.isInteger(priceIdr) || priceIdr <= 0) {
