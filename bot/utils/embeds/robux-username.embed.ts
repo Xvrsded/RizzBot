@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 import { buildCustomId } from "../../interactions/custom-id";
 import { formatIdr } from "../pricing";
-import { ROBUX_USERNAME_PACKAGES } from "../../../shared/robux-packages";
+import { ROBUX_USERNAME_PACKAGES, type RobuxPackage } from "../../../shared/robux-packages";
 import {
   formatOrderCodeLabel,
   formatRobloxUsernameCopy,
@@ -59,12 +59,12 @@ export interface RobuxOrderEmbedData {
   robloxAvatarUrl: string | null;
 }
 
-export function buildRobuxPanelEmbed(): EmbedBuilder {
+export function buildRobuxPanelEmbed(packages: readonly RobuxPackage[] = ROBUX_USERNAME_PACKAGES): EmbedBuilder {
   return buildStoreProductPanelEmbed({
     title: "🛒 ROBUX VIA SEND",
     subtitle: "RIZZSTORE • PRICE LIST VIA SEND",
     welcomeLine: "Silakan pilih paket Robux Via Send yang sesuai dengan kebutuhan kamu.",
-    packages: ROBUX_USERNAME_PACKAGES,
+    packages,
     infoTitle: "🛡️",
     infoContent: ROBUX_VIA_SEND_INFO,
     footerLabel: "RizzBot • Robux Via Send",
@@ -87,7 +87,10 @@ export function buildRobuxPackageSelectEmbed(): EmbedBuilder {
     .setFooter(ROBUX_FOOTER);
 }
 
-export function buildRobuxPackageSelectRow(sessionId?: string): ActionRowBuilder<StringSelectMenuBuilder> {
+export function buildRobuxPackageSelectRow(
+  packages: readonly RobuxPackage[] = ROBUX_USERNAME_PACKAGES,
+  sessionId?: string,
+): ActionRowBuilder<StringSelectMenuBuilder> {
   const customId = sessionId
     ? buildCustomId("robux", "select-package", sessionId)
     : buildCustomId("robux", "select-package");
@@ -96,7 +99,7 @@ export function buildRobuxPackageSelectRow(sessionId?: string): ActionRowBuilder
     .setCustomId(customId)
     .setPlaceholder("Pilih paket Robux")
     .addOptions(
-      ROBUX_USERNAME_PACKAGES.map((pkg) =>
+      packages.map((pkg) =>
         new StringSelectMenuOptionBuilder()
           .setLabel(`${pkg.robuxAmount.toLocaleString("id-ID")} ⏣`)
           .setDescription(formatIdr(pkg.priceIdr))

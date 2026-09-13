@@ -8,6 +8,7 @@ import {
   type RobuxOrderSessionDocument,
 } from "../../database/models/robux-order-session.model";
 import type { RobloxUserLookupResult } from "./roblox.service";
+import { guildConfigService } from "./guild-config.service";
 
 export interface RobuxOrderSessionPayload {
   guildId: string;
@@ -82,11 +83,13 @@ export const robuxOrderSessionService = {
   },
 
   async createSession(payload: RobuxOrderSessionPayload): Promise<RobuxOrderSessionDocument> {
-    if (!isValidRobuxPackageAmount(payload.robuxAmount)) {
+    const packages = await guildConfigService.getRobuxPackages(payload.guildId);
+
+    if (!isValidRobuxPackageAmount(payload.robuxAmount, packages)) {
       throw new Error(`Invalid Robux package amount: ${payload.robuxAmount}`);
     }
 
-    const finalPrice = getRobuxPackagePrice(payload.robuxAmount)!;
+    const finalPrice = getRobuxPackagePrice(payload.robuxAmount, packages)!;
 
     return robuxOrderSessionRepository.create({
       sessionId: randomUUID(),
@@ -108,11 +111,13 @@ export const robuxOrderSessionService = {
     sessionId: string,
     payload: RobuxOrderSessionPayload,
   ): Promise<RobuxOrderSessionDocument | null> {
-    if (!isValidRobuxPackageAmount(payload.robuxAmount)) {
+    const packages = await guildConfigService.getRobuxPackages(payload.guildId);
+
+    if (!isValidRobuxPackageAmount(payload.robuxAmount, packages)) {
       throw new Error(`Invalid Robux package amount: ${payload.robuxAmount}`);
     }
 
-    const finalPrice = getRobuxPackagePrice(payload.robuxAmount)!;
+    const finalPrice = getRobuxPackagePrice(payload.robuxAmount, packages)!;
 
     return robuxOrderSessionRepository.updateBySessionId(sessionId, {
       robuxAmount: payload.robuxAmount,
@@ -127,7 +132,21 @@ export const robuxOrderSessionService = {
   },
 
   async confirmSession(sessionId: string): Promise<RobuxOrderSessionDocument | null> {
+    const session = await this.getSession(sessionId);
+
+    if (!session) {
+      return null;
+    }
+
+    const packages = await guildConfigService.getRobuxPackages(session.guildId);
+    const finalPrice = getRobuxPackagePrice(session.robuxAmount, packages);
+
+    if (finalPrice === null) {
+      return null;
+    }
+
     return robuxOrderSessionRepository.updateBySessionId(sessionId, {
+      finalPrice,
       status: RobuxOrderSessionStatus.CONFIRMED,
     });
   },

@@ -31,6 +31,13 @@ import {
   buildGigPricingSavedEmbed,
   extractGigPricingModalInput,
 } from "../../../utils/embeds/gig-pricing.embed";
+import {
+  buildRobuxPackagesInvalidEmbed,
+  buildRobuxPackagesModal,
+  buildRobuxPackagesSavedEmbed,
+  extractRobuxPackagesModalInput,
+} from "../../../utils/embeds/robux-packages.embed";
+import { parseRobuxPackages } from "../../../../shared/robux-packages";
 import { logger } from "../../../../shared/logger";
 
 const STUB_LABELS: Record<string, string> = {
@@ -83,6 +90,12 @@ export async function handleDashboardButton(
     if (parsed.id === "gig-config") {
       const pricing = await guildConfigService.getGigPricing(guildId);
       await interaction.showModal(buildGigPricingModal(pricing));
+      return;
+    }
+
+    if (parsed.id === "robux-packages") {
+      const packages = await guildConfigService.getRobuxPackages(guildId);
+      await interaction.showModal(buildRobuxPackagesModal(packages));
       return;
     }
 
@@ -215,6 +228,32 @@ export async function handleDashboardModal(
     await interaction.editReply({ embeds: [buildGigPricingSavedEmbed(pricing)] });
     logger.dashboard(
       `GIG pricing updated by ${interaction.user.id} in guild ${guildId} (rate=${rateIdr}, rounding=${roundingIdr})`,
+    );
+    return;
+  }
+
+  if (parsed.action === "robux-packages-save") {
+    const packages = parseRobuxPackages(extractRobuxPackagesModalInput(interaction));
+
+    if (!packages) {
+      await replyEmbedEphemeral(interaction, buildRobuxPackagesInvalidEmbed());
+      return;
+    }
+
+    await interaction.deferReply({ ephemeral: true });
+
+    const savedPackages = await guildConfigService.updateRobuxPackages(guildId, packages);
+
+    if (!savedPackages) {
+      await interaction.editReply({ embeds: [buildServiceUnavailableEmbed()] });
+      return;
+    }
+
+    await dashboardService.refreshDashboard(interaction.client, guildId);
+    await productPanelService.restoreRobuxUsernamePanel(interaction.client);
+    await interaction.editReply({ embeds: [buildRobuxPackagesSavedEmbed(savedPackages)] });
+    logger.dashboard(
+      `Robux packages updated by ${interaction.user.id} in guild ${guildId} (count=${savedPackages.length})`,
     );
     return;
   }

@@ -160,7 +160,7 @@ export const productPanelService = {
       ProductType.ROBUX_USERNAME,
       ROBUX_USERNAME_CHANNEL_ID,
       "Robux Via Username",
-      buildRobuxPanelEmbed,
+      async (guildId) => buildRobuxPanelEmbed(await guildConfigService.getRobuxPackages(guildId)),
       buildRobuxPanelRow,
     );
   },

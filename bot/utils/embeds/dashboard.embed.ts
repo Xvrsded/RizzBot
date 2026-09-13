@@ -117,6 +117,11 @@ export function buildDashboardRows(statuses: ServiceStatusMap): ActionRowBuilder
         .setEmoji("⚙️")
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
+        .setCustomId(buildCustomId("dashboard", "stub", "robux-packages"))
+        .setLabel("Robux Packages")
+        .setEmoji("💎")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
         .setCustomId(buildCustomId("dashboard", "stub", "mm-management"))
         .setLabel("MM Management")
         .setEmoji("🛡️")

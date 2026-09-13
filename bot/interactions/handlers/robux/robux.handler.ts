@@ -89,6 +89,7 @@ async function processRobuxUsernameForm(
 
   let robuxAmount: number;
   let sessionId: string | undefined;
+  const packages = await guildConfigService.getRobuxPackages(interaction.guild.id);
 
   if (isRobuxSessionId(targetId)) {
     sessionId = targetId;
@@ -114,7 +115,7 @@ async function processRobuxUsernameForm(
 
     robuxAmount = existingSession.robuxAmount;
   } else {
-    const parsedAmount = parseRobuxPackageAmount(targetId);
+    const parsedAmount = parseRobuxPackageAmount(targetId, packages);
 
     if (parsedAmount === null) {
       await replyEmbedEphemeral(
@@ -127,7 +128,7 @@ async function processRobuxUsernameForm(
     robuxAmount = parsedAmount;
   }
 
-  const packagePrice = getRobuxPackagePrice(robuxAmount);
+  const packagePrice = getRobuxPackagePrice(robuxAmount, packages);
   logger.info(
     `[ROBUX DEBUG] package=${robuxAmount} price=${packagePrice ?? "invalid"} sessionId=${sessionId ?? "new"}`,
   );
@@ -220,7 +221,9 @@ export async function handleRobuxButton(
 
       await interaction.reply({
         embeds: [buildRobuxPackageSelectEmbed()],
-        components: [buildRobuxPackageSelectRow()],
+        components: [
+          buildRobuxPackageSelectRow(await guildConfigService.getRobuxPackages(interaction.guild.id)),
+        ],
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -235,7 +238,7 @@ export async function handleRobuxButton(
       if (!parsed.id) {
         await interaction.reply({
           embeds: [buildRobuxPackageSelectEmbed()],
-          components: [buildRobuxPackageSelectRow()],
+          components: [buildRobuxPackageSelectRow(await guildConfigService.getRobuxPackages(interaction.guild.id))],
           flags: MessageFlags.Ephemeral,
         });
         return;
@@ -268,7 +271,12 @@ export async function handleRobuxButton(
 
       await interaction.reply({
         embeds: [buildRobuxPackageSelectEmbed()],
-        components: [buildRobuxPackageSelectRow(session.sessionId)],
+          components: [
+            buildRobuxPackageSelectRow(
+              await guildConfigService.getRobuxPackages(interaction.guild.id),
+              session.sessionId,
+            ),
+          ],
         flags: MessageFlags.Ephemeral,
       });
       return;
@@ -449,7 +457,7 @@ export async function handleRobuxSelectMenu(
   interaction: StringSelectMenuInteraction,
   parsed: ParsedCustomId,
 ): Promise<void> {
-  if (!interaction.inGuild()) {
+  if (!interaction.inGuild() || !interaction.guild) {
     await replyEmbedEphemeral(
       interaction,
       robuxError("❌ TERJADI KESALAHAN", "Interaksi ini hanya tersedia di dalam server."),
@@ -465,7 +473,8 @@ export async function handleRobuxSelectMenu(
     return;
   }
 
-  const selectedAmount = parseRobuxPackageAmount(interaction.values[0] ?? "");
+  const packages = await guildConfigService.getRobuxPackages(interaction.guild.id);
+  const selectedAmount = parseRobuxPackageAmount(interaction.values[0] ?? "", packages);
 
   if (selectedAmount === null) {
     await replyEmbedEphemeral(
@@ -475,7 +484,7 @@ export async function handleRobuxSelectMenu(
     return;
   }
 
-  const selectedPrice = getRobuxPackagePrice(selectedAmount);
+  const selectedPrice = getRobuxPackagePrice(selectedAmount, packages);
   logger.info(`[ROBUX DEBUG] package selected package=${selectedAmount} price=${selectedPrice ?? "invalid"}`);
 
   if (parsed.id && isRobuxSessionId(parsed.id)) {
@@ -489,7 +498,7 @@ export async function handleRobuxSelectMenu(
       return;
     }
 
-    const finalPrice = getRobuxPackagePrice(selectedAmount);
+    const finalPrice = getRobuxPackagePrice(selectedAmount, packages);
 
     if (finalPrice === null) {
       await replyEmbedEphemeral(

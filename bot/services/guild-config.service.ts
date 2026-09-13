@@ -1,6 +1,11 @@
 import { guildConfigRepository } from "../../database/repositories/guild-config.repository";
 import type { GuildConfigDocument, GuildConfigUpdate } from "../../database/models/guild-config.model";
 import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../shared/products";
+import {
+  normalizeRobuxPackages,
+  ROBUX_USERNAME_PACKAGES,
+  type RobuxPackage,
+} from "../../shared/robux-packages";
 
 export const guildConfigService = {
   normalizeGigPricing(config: GuildConfigDocument | null): GigPricingConfig {
@@ -8,6 +13,10 @@ export const guildConfigService = {
       rateIdr: config?.gigPricing?.rateIdr ?? DEFAULT_GIG_PRICING.rateIdr,
       roundingIdr: config?.gigPricing?.roundingIdr ?? DEFAULT_GIG_PRICING.roundingIdr,
     };
+  },
+
+  normalizeRobuxPackages(config: GuildConfigDocument | null): RobuxPackage[] {
+    return normalizeRobuxPackages(config?.robuxPackages ?? ROBUX_USERNAME_PACKAGES);
   },
 
   async getGuildConfig(guildId: string): Promise<GuildConfigDocument | null> {
@@ -51,6 +60,20 @@ export const guildConfigService = {
     });
 
     return updated ? this.normalizeGigPricing(updated) : null;
+  },
+
+  async getRobuxPackages(guildId: string): Promise<RobuxPackage[]> {
+    const config = await this.getOrCreateGuildConfig(guildId);
+    return this.normalizeRobuxPackages(config);
+  },
+
+  async updateRobuxPackages(guildId: string, packages: RobuxPackage[]): Promise<RobuxPackage[] | null> {
+    const updated = await guildConfigRepository.updateByGuildId(guildId, {
+      robuxPackages: packages,
+      dashboardLastUpdatedAt: new Date(),
+    });
+
+    return updated ? this.normalizeRobuxPackages(updated) : null;
   },
 
   async upsertGuildConfig(

@@ -16,22 +16,90 @@ export const ROBUX_USERNAME_PACKAGES: readonly RobuxPackage[] = [
   { robuxAmount: 1000, priceIdr: 155000 },
 ] as const;
 
-const PACKAGE_MAP = new Map<number, number>(
-  ROBUX_USERNAME_PACKAGES.map((pkg) => [pkg.robuxAmount, pkg.priceIdr]),
-);
+export function normalizeRobuxPackages(packages: readonly RobuxPackage[] | null | undefined): RobuxPackage[] {
+  const source = packages?.length ? packages : ROBUX_USERNAME_PACKAGES;
+  const unique = new Map<number, number>();
 
-export function isValidRobuxPackageAmount(robuxAmount: number): boolean {
-  return PACKAGE_MAP.has(robuxAmount);
+  for (const pkg of source) {
+    if (
+      Number.isInteger(pkg.robuxAmount) &&
+      pkg.robuxAmount > 0 &&
+      Number.isInteger(pkg.priceIdr) &&
+      pkg.priceIdr > 0
+    ) {
+      unique.set(pkg.robuxAmount, pkg.priceIdr);
+    }
+  }
+
+  return [...unique.entries()]
+    .map(([robuxAmount, priceIdr]) => ({ robuxAmount, priceIdr }))
+    .sort((left, right) => left.robuxAmount - right.robuxAmount);
 }
 
-export function getRobuxPackagePrice(robuxAmount: number): number | null {
-  return PACKAGE_MAP.get(robuxAmount) ?? null;
+export function formatRobuxPackages(packages: readonly RobuxPackage[]): string {
+  return normalizeRobuxPackages(packages)
+    .map((pkg) => `${pkg.robuxAmount}=${pkg.priceIdr}`)
+    .join("\n");
 }
 
-export function parseRobuxPackageAmount(value: string): number | null {
+export function parseRobuxPackages(input: string): RobuxPackage[] | null {
+  const lines = input
+    .split(/[\n,;]/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!lines.length) {
+    return null;
+  }
+
+  const packages: RobuxPackage[] = [];
+
+  for (const line of lines) {
+    const match = line.match(/^(\d+)\s*[=:]\s*([\d.\s,]+)$/);
+
+    if (!match) {
+      return null;
+    }
+
+    const robuxAmount = Number.parseInt(match[1], 10);
+    const priceIdr = Number.parseInt(match[2].replace(/[.\s,]/g, ""), 10);
+
+    if (!Number.isInteger(robuxAmount) || robuxAmount <= 0 || !Number.isInteger(priceIdr) || priceIdr <= 0) {
+      return null;
+    }
+
+    packages.push({ robuxAmount, priceIdr });
+  }
+
+  const normalized = normalizeRobuxPackages(packages);
+  return normalized.length === packages.length ? normalized : null;
+}
+
+export function getRobuxPackageMap(packages: readonly RobuxPackage[] = ROBUX_USERNAME_PACKAGES): Map<number, number> {
+  return new Map(normalizeRobuxPackages(packages).map((pkg) => [pkg.robuxAmount, pkg.priceIdr]));
+}
+
+export function isValidRobuxPackageAmount(
+  robuxAmount: number,
+  packages: readonly RobuxPackage[] = ROBUX_USERNAME_PACKAGES,
+): boolean {
+  return getRobuxPackageMap(packages).has(robuxAmount);
+}
+
+export function getRobuxPackagePrice(
+  robuxAmount: number,
+  packages: readonly RobuxPackage[] = ROBUX_USERNAME_PACKAGES,
+): number | null {
+  return getRobuxPackageMap(packages).get(robuxAmount) ?? null;
+}
+
+export function parseRobuxPackageAmount(
+  value: string,
+  packages: readonly RobuxPackage[] = ROBUX_USERNAME_PACKAGES,
+): number | null {
   const amount = Number.parseInt(value.trim(), 10);
 
-  if (!Number.isInteger(amount) || !isValidRobuxPackageAmount(amount)) {
+  if (!Number.isInteger(amount) || !isValidRobuxPackageAmount(amount, packages)) {
     return null;
   }
 
