@@ -50,7 +50,7 @@ function buildOrderDescription(orderCode: string, status: GiftOrderStatus, hint:
   return [formatOrderCodeLabel(orderCode), STATUS_LABEL[status], "", hint].join("\n");
 }
 
-export function buildGiftPanelEmbed(pricing: GigPricingConfig = DEFAULT_GIG_PRICING): EmbedBuilder {
+export function buildGiftPanelEmbed(): EmbedBuilder {
   return createBaseEmbed("🎁 GIFT IN GAME", EMBED_COLORS.gift).setDescription(
     [
       "Pesan Gamepass Roblox yang mendukung fitur gifting — tanpa perlu memiliki Robux sendiri.",
@@ -58,9 +58,10 @@ export function buildGiftPanelEmbed(pricing: GigPricingConfig = DEFAULT_GIG_PRIC
       "━━━━━━━━━━━━━━━━━━━━",
       "",
       `💎 **RATE**`,
-      `1 Robux = ${formatIdr(pricing.rateIdr)}`,
+      `🌍 **Global:** 1 Robux = Rp92`,
+      `🇮🇩 **Indo:** 1 Robux = Rp95`,
       "",
-      `Pembayaran dibulatkan ke atas ke kelipatan ${formatIdr(pricing.roundingIdr)}.`,
+      `Pembayaran dibulatkan ke atas ke kelipatan Rp500.`,
       "",
       "━━━━━━━━━━━━━━━━━━━━",
       "",
@@ -78,10 +79,15 @@ export const buildGiftInGamePanelEmbed = buildGiftPanelEmbed;
 export function buildGiftInGamePanelRow(): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
-      .setCustomId(buildCustomId("gift", "order"))
-      .setLabel("ORDER SEKARANG")
-      .setEmoji("🎁")
+      .setCustomId(buildCustomId("gift", "order", "global"))
+      .setLabel("ORDER (GLOBAL)")
+      .setEmoji("🌍")
       .setStyle(ButtonStyle.Primary),
+    new ButtonBuilder()
+      .setCustomId(buildCustomId("gift", "order", "indo"))
+      .setLabel("ORDER (INDO)")
+      .setEmoji("🇮🇩")
+      .setStyle(ButtonStyle.Success),
   );
 }
 

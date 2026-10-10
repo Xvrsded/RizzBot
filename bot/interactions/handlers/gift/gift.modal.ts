@@ -13,8 +13,8 @@ export interface GiftModalDefaults {
   robloxUsername?: string;
 }
 
-export function buildGiftOrderModal(sessionId?: string, defaults: GiftModalDefaults = {}): ModalBuilder {
-  const customId = sessionId ? buildCustomId("gift", "submit", sessionId) : buildCustomId("gift", "submit");
+export function buildGiftOrderModal(sessionId?: string, defaults: GiftModalDefaults = {}, rateType?: string): ModalBuilder {
+  const customId = sessionId ? buildCustomId("gift", "submit", sessionId) : buildCustomId("gift", "submit", rateType || "global");
 
   const gameInput = new TextInputBuilder()
     .setCustomId("game_name")

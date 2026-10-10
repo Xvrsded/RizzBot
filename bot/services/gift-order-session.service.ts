@@ -21,6 +21,7 @@ export interface GiftOrderSessionPayload extends GiftOrderFormInput {
   guildId: string;
   userId: string;
   robloxUser: RobloxUserLookupResult;
+  rateIdr?: number;
 }
 
 export function validateGiftOrderForm(input: GiftOrderFormInput): string | null {
@@ -116,8 +117,8 @@ export const giftOrderSessionService = {
   },
 
   async createSession(payload: GiftOrderSessionPayload): Promise<GiftOrderSessionDocument> {
-    const gigPricing = await guildConfigService.getGigPricing(payload.guildId);
-    const pricing = calculateGiftInGamePrice(payload.robuxAmount, gigPricing);
+    const rateIdr = payload.rateIdr ?? 92;
+    const pricing = calculateGiftInGamePrice(payload.robuxAmount, { rateIdr, roundingIdr: 500 });
 
     return giftOrderSessionRepository.create({
       sessionId: randomUUID(),
@@ -133,7 +134,7 @@ export const giftOrderSessionService = {
       robloxAvatarUrl: payload.robloxUser.avatarUrl,
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
-      rateIdr: gigPricing.rateIdr,
+      rateIdr: rateIdr,
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });
@@ -143,8 +144,11 @@ export const giftOrderSessionService = {
     sessionId: string,
     payload: GiftOrderSessionPayload,
   ): Promise<GiftOrderSessionDocument | null> {
-    const gigPricing = await guildConfigService.getGigPricing(payload.guildId);
-    const pricing = calculateGiftInGamePrice(payload.robuxAmount, gigPricing);
+    const session = await giftOrderSessionRepository.findBySessionId(sessionId);
+    if (!session) return null;
+    
+    const rateIdr = payload.rateIdr ?? session.rateIdr;
+    const pricing = calculateGiftInGamePrice(payload.robuxAmount, { rateIdr, roundingIdr: 500 });
 
     return giftOrderSessionRepository.updateBySessionId(sessionId, {
       gameName: payload.gameName.trim(),
@@ -156,7 +160,7 @@ export const giftOrderSessionService = {
       robloxAvatarUrl: payload.robloxUser.avatarUrl,
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
-      rateIdr: gigPricing.rateIdr,
+      rateIdr: rateIdr,
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });

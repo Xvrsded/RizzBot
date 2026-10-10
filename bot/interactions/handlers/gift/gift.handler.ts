@@ -84,7 +84,7 @@ async function editPreviewInteraction(
 
 async function processGiftOrderForm(
   interaction: ModalSubmitInteraction,
-  sessionId?: string,
+  parsedId?: string,
 ): Promise<void> {
   if (!interaction.inGuild() || !interaction.guild) {
     await replyEmbedEphemeral(
@@ -151,6 +151,11 @@ async function processGiftOrderForm(
     return;
   }
 
+  const isSessionId = parsedId && parsedId.length > 10;
+  const sessionId = isSessionId ? parsedId : undefined;
+  const rateType = isSessionId ? undefined : (parsedId || "global");
+  const rateIdr = rateType === "indo" ? 95 : 92;
+
   const payload = {
     guildId: interaction.guild.id,
     userId: interaction.user.id,
@@ -159,6 +164,7 @@ async function processGiftOrderForm(
     robuxAmount,
     robloxUsername: raw.robloxUsername,
     robloxUser,
+    rateIdr,
   };
 
   const session = sessionId
@@ -198,7 +204,8 @@ export async function handleGiftButton(
         return;
       }
 
-      await interaction.showModal(buildGiftOrderModal());
+      const rateType = parsed.id || "global";
+      await interaction.showModal(buildGiftOrderModal(undefined, {}, rateType));
       return;
     }
 

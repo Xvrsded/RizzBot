@@ -1,4 +1,4 @@
-import type { APIEmbed, Client, Message, TextChannel } from "discord.js";
+import type { APIEmbed, Client, Message, TextChannel, Guild } from "discord.js";
 import {
   GIFT_TRANSACTION_LOG_CHANNEL_ID,
   LEADERBOARD_CHANNEL_ID,
@@ -9,6 +9,7 @@ import {
   parseTransactionLogEmbed,
   type LeaderboardAggregation,
   type ParsedTransactionLog,
+  type CustomerLeaderboardEntry,
 } from "./leaderboard-parser";
 import {
   buildLeaderboardEmbed,
@@ -167,6 +168,42 @@ async function buildAggregation(client: Client<true>): Promise<LeaderboardAggreg
   return aggregateLeaderboard(transactions);
 }
 
+const LEADERBOARD_ROLES = [
+  { threshold: 100_000_000, roleId: "1555630216028885012" },
+  { threshold: 75_000_000, roleId: "1555629952328667236" },
+  { threshold: 50_000_000, roleId: "1555629400790405120" },
+  { threshold: 30_000_000, roleId: "1555629768760758372" },
+  { threshold: 10_000_000, roleId: "1537368224851566672" },
+  { threshold: 5_000_000, roleId: "1447842093107249183" },
+  { threshold: 1_000_000, roleId: "1447842107372081295" },
+  { threshold: 500_000, roleId: "1447842122014392360" },
+];
+
+async function updateAutoRoles(guild: Guild, customers: CustomerLeaderboardEntry[]): Promise<void> {
+  const allRoleIds = LEADERBOARD_ROLES.map((r) => r.roleId);
+
+  for (const customer of customers) {
+    const targetRole = LEADERBOARD_ROLES.find((r) => customer.totalSpentIdr >= r.threshold)?.roleId;
+    
+    try {
+      const member = await guild.members.fetch(customer.customerId).catch(() => null);
+      if (!member) continue;
+
+      const rolesToRemove = allRoleIds.filter((id) => id !== targetRole && member.roles.cache.has(id));
+      const needsTargetRole = targetRole && !member.roles.cache.has(targetRole);
+
+      if (rolesToRemove.length > 0) {
+        await member.roles.remove(rolesToRemove, "Leaderboard auto-role update");
+      }
+      if (needsTargetRole) {
+        await member.roles.add(targetRole, "Leaderboard auto-role update");
+      }
+    } catch (error) {
+      logger.error(`[LEADERBOARD] Failed to update roles for ${customer.customerId}`, error);
+    }
+  }
+}
+
 async function renderLeaderboardMessage(
   client: Client<true>,
   guildId: string,
@@ -226,6 +263,10 @@ export const leaderboardService = {
     try {
       const guildId = channel.guild.id;
       const aggregation = await buildAggregation(client);
+      
+      // Update auto roles based on aggregation
+      await updateAutoRoles(channel.guild, aggregation.customers);
+
       const record = await leaderboardMessageRepository.findByGuildId(guildId);
       const messageId = await renderLeaderboardMessage(
         client,
