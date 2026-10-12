@@ -148,7 +148,7 @@ export const productPanelService = {
       ProductType.GIFT_IN_GAME,
       GIFT_IN_GAME_CHANNEL_ID,
       "Gift In Game",
-      async (guildId) => buildGiftPanelEmbed(await guildConfigService.getGigPricing(guildId)),
+      () => buildGiftPanelEmbed(),
       buildGiftInGamePanelRow,
     );
   },
