@@ -80,12 +80,12 @@ export function buildGiftInGamePanelRow(): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
       .setCustomId(buildCustomId("gift", "order", "global"))
-      .setLabel("ORDER (GLOBAL)")
+      .setLabel("GIG REG GLOBAL")
       .setEmoji("🌍")
       .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
       .setCustomId(buildCustomId("gift", "order", "indo"))
-      .setLabel("ORDER (INDO)")
+      .setLabel("GIG REG INDO")
       .setEmoji("🇮🇩")
       .setStyle(ButtonStyle.Success),
   );

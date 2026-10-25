@@ -6,6 +6,8 @@ import { LimitedOrderSessionModel, LimitedOrderSessionStatus } from "../../datab
 import { CommunityPayoutOrderSessionModel, CommunityPayoutOrderSessionStatus } from "../../database/models/community-payout-order-session.model";
 import { MiddlemanOrderSessionModel, MiddlemanOrderSessionStatus } from "../../database/models/middleman-order-session.model";
 import { logger } from "../../shared/logger";
+import { GIFT_OWNER_ROLE_ID } from "../../shared/products";
+import { guildConfigService } from "./guild-config.service";
 
 export interface CustomerTier {
   roleId: string;
@@ -18,6 +20,10 @@ export const CUSTOMER_TIERS: CustomerTier[] = [
   { label: "1JT+", thresholdIdr: 1_000_000, roleId: "1447842107372081295" },
   { label: "5JT+", thresholdIdr: 5_000_000, roleId: "1447842093107249183" },
   { label: "10JT+", thresholdIdr: 10_000_000, roleId: "1537368224851566672" },
+  { label: "30JT+", thresholdIdr: 30_000_000, roleId: "1555629768760758372" },
+  { label: "50JT+", thresholdIdr: 50_000_000, roleId: "1555629400790405120" },
+  { label: "75JT+", thresholdIdr: 75_000_000, roleId: "1555629952328667236" },
+  { label: "100JT+", thresholdIdr: 100_000_000, roleId: "1555630216028885012" },
 ];
 
 export interface CustomerTierSyncResult {
@@ -73,12 +79,18 @@ export const customerTierService = {
 
       const totalSpentIdr = await this.calculateTotalSpendIdr(userId);
 
+      const config = await guildConfigService.getGuildConfig(guildId).catch(() => null);
+      const isOwner =
+        userId === guild.ownerId ||
+        member.roles.cache.has(GIFT_OWNER_ROLE_ID) ||
+        Boolean(config?.ownerRoleId && member.roles.cache.has(config.ownerRoleId));
+
       const addedRoles: CustomerTier[] = [];
       const alreadyHasRoles: CustomerTier[] = [];
       const missingRoles: CustomerTier[] = [];
 
       for (const tier of CUSTOMER_TIERS) {
-        if (totalSpentIdr >= tier.thresholdIdr) {
+        if (isOwner || totalSpentIdr >= tier.thresholdIdr) {
           if (member.roles.cache.has(tier.roleId)) {
             alreadyHasRoles.push(tier);
             logger.info(`[AUTO ROLE] User: ${member.user.tag} | User ID: ${userId} | Total Belanja: Rp${totalSpentIdr} | Role: ${tier.label} | Action: ALREADY_HAS_ROLE`);

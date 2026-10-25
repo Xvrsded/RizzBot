@@ -1,8 +1,10 @@
-import type { APIEmbed, Client, Message, TextChannel, Guild } from "discord.js";
+import type { APIEmbed, Client, Message, TextChannel, Guild, GuildMember } from "discord.js";
 import {
+  GIFT_OWNER_ROLE_ID,
   GIFT_TRANSACTION_LOG_CHANNEL_ID,
   LEADERBOARD_CHANNEL_ID,
 } from "../../shared/products";
+import { guildConfigService } from "./guild-config.service";
 import { leaderboardMessageRepository } from "../../database/repositories/leaderboard-message.repository";
 import {
   aggregateLeaderboard,
@@ -182,21 +184,68 @@ const LEADERBOARD_ROLES = [
 async function updateAutoRoles(guild: Guild, customers: CustomerLeaderboardEntry[]): Promise<void> {
   const allRoleIds = LEADERBOARD_ROLES.map((r) => r.roleId);
 
+  // 1. Owner mendapatkan SEMUA role leaderboard
+  const ownerMembers = new Map<string, GuildMember>();
+  try {
+    const config = await guildConfigService.getGuildConfig(guild.id).catch(() => null);
+    const ownerRoleIds = new Set<string>([GIFT_OWNER_ROLE_ID]);
+    if (config?.ownerRoleId) {
+      ownerRoleIds.add(config.ownerRoleId);
+    }
+
+    if (guild.ownerId) {
+      const serverOwner = await guild.members.fetch(guild.ownerId).catch(() => null);
+      if (serverOwner) {
+        ownerMembers.set(serverOwner.id, serverOwner);
+      }
+    }
+
+    for (const roleId of ownerRoleIds) {
+      const role = guild.roles.cache.get(roleId) ?? (await guild.roles.fetch(roleId).catch(() => null));
+      if (role) {
+        for (const [id, member] of role.members) {
+          ownerMembers.set(id, member);
+        }
+      }
+    }
+
+    for (const owner of ownerMembers.values()) {
+      const missingRoles = allRoleIds.filter((id) => !owner.roles.cache.has(id));
+      if (missingRoles.length > 0) {
+        await owner.roles.add(missingRoles, "Leaderboard auto-role (Owner gets all roles)").catch((error) => {
+          logger.error(`[LEADERBOARD] Failed to add all roles to owner ${owner.id}`, error);
+        });
+      }
+    }
+  } catch (error) {
+    logger.error("[LEADERBOARD] Failed to process owner auto-roles", error);
+  }
+
+  // 2. Berikan role ke customer berdasarkan total belanja
+  // Role sebelumnya TIDAK dihapus saat user upgrade role
   for (const customer of customers) {
-    const targetRole = LEADERBOARD_ROLES.find((r) => customer.totalSpentIdr >= r.threshold)?.roleId;
-    
+    // Jika customer adalah Owner, lewati karena sudah mendapatkan semua role
+    if (ownerMembers.has(customer.customerId)) {
+      continue;
+    }
+
+    const qualifiedRoles = LEADERBOARD_ROLES
+      .filter((r) => customer.totalSpentIdr >= r.threshold)
+      .map((r) => r.roleId);
+
+    if (qualifiedRoles.length === 0) {
+      continue;
+    }
+
     try {
       const member = await guild.members.fetch(customer.customerId).catch(() => null);
       if (!member) continue;
 
-      const rolesToRemove = allRoleIds.filter((id) => id !== targetRole && member.roles.cache.has(id));
-      const needsTargetRole = targetRole && !member.roles.cache.has(targetRole);
+      // Hanya tambahkan role yang belum dimiliki, jangan hapus role sebelumnya
+      const rolesToAdd = qualifiedRoles.filter((id) => !member.roles.cache.has(id));
 
-      if (rolesToRemove.length > 0) {
-        await member.roles.remove(rolesToRemove, "Leaderboard auto-role update");
-      }
-      if (needsTargetRole) {
-        await member.roles.add(targetRole, "Leaderboard auto-role update");
+      if (rolesToAdd.length > 0) {
+        await member.roles.add(rolesToAdd, "Leaderboard auto-role update");
       }
     } catch (error) {
       logger.error(`[LEADERBOARD] Failed to update roles for ${customer.customerId}`, error);
