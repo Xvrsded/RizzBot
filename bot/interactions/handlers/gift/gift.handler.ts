@@ -151,10 +151,9 @@ async function processGiftOrderForm(
     return;
   }
 
+  const pricing = await guildConfigService.getGigPricing(interaction.guild.id);
   const isSessionId = parsedId && parsedId.length > 10;
   const sessionId = isSessionId ? parsedId : undefined;
-  const rateType = isSessionId ? undefined : (parsedId || "global");
-  const rateIdr = rateType === "indo" ? 95 : 92;
 
   const payload = {
     guildId: interaction.guild.id,
@@ -164,7 +163,8 @@ async function processGiftOrderForm(
     robuxAmount,
     robloxUsername: raw.robloxUsername,
     robloxUser,
-    rateIdr,
+    rateIdr: pricing.rateIdr,
+    roundingIdr: pricing.roundingIdr,
   };
 
   const session = sessionId

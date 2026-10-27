@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { generateGiftOrderCode } from "../utils/order-code";
-import { GIFT_SESSION_EXPIRY_MS } from "../../shared/products";
+import {
+  DEFAULT_GIG_PRICING,
+  GIFT_SESSION_EXPIRY_MS,
+  type GigPricingConfig,
+} from "../../shared/products";
 import { calculateGiftInGamePrice } from "../utils/pricing";
 import { giftOrderSessionRepository } from "../../database/repositories/gift-order-session.repository";
 import {
@@ -22,6 +26,7 @@ export interface GiftOrderSessionPayload extends GiftOrderFormInput {
   userId: string;
   robloxUser: RobloxUserLookupResult;
   rateIdr?: number;
+  roundingIdr?: number;
 }
 
 export function validateGiftOrderForm(input: GiftOrderFormInput): string | null {
@@ -117,8 +122,11 @@ export const giftOrderSessionService = {
   },
 
   async createSession(payload: GiftOrderSessionPayload): Promise<GiftOrderSessionDocument> {
-    const rateIdr = payload.rateIdr ?? 92;
-    const pricing = calculateGiftInGamePrice(payload.robuxAmount, { rateIdr, roundingIdr: 500 });
+    const pricingConfig: GigPricingConfig = {
+      rateIdr: payload.rateIdr ?? DEFAULT_GIG_PRICING.rateIdr,
+      roundingIdr: payload.roundingIdr ?? DEFAULT_GIG_PRICING.roundingIdr,
+    };
+    const pricing = calculateGiftInGamePrice(payload.robuxAmount, pricingConfig);
 
     return giftOrderSessionRepository.create({
       sessionId: randomUUID(),
@@ -134,7 +142,7 @@ export const giftOrderSessionService = {
       robloxAvatarUrl: payload.robloxUser.avatarUrl,
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
-      rateIdr: rateIdr,
+      rateIdr: pricingConfig.rateIdr,
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });
@@ -147,8 +155,11 @@ export const giftOrderSessionService = {
     const session = await giftOrderSessionRepository.findBySessionId(sessionId);
     if (!session) return null;
     
-    const rateIdr = payload.rateIdr ?? session.rateIdr;
-    const pricing = calculateGiftInGamePrice(payload.robuxAmount, { rateIdr, roundingIdr: 500 });
+    const pricingConfig: GigPricingConfig = {
+      rateIdr: payload.rateIdr ?? session.rateIdr,
+      roundingIdr: payload.roundingIdr ?? DEFAULT_GIG_PRICING.roundingIdr,
+    };
+    const pricing = calculateGiftInGamePrice(payload.robuxAmount, pricingConfig);
 
     return giftOrderSessionRepository.updateBySessionId(sessionId, {
       gameName: payload.gameName.trim(),
@@ -160,7 +171,7 @@ export const giftOrderSessionService = {
       robloxAvatarUrl: payload.robloxUser.avatarUrl,
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
-      rateIdr: rateIdr,
+      rateIdr: pricingConfig.rateIdr,
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });

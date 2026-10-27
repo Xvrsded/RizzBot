@@ -50,7 +50,7 @@ function buildOrderDescription(orderCode: string, status: GiftOrderStatus, hint:
   return [formatOrderCodeLabel(orderCode), STATUS_LABEL[status], "", hint].join("\n");
 }
 
-export function buildGiftPanelEmbed(): EmbedBuilder {
+export function buildGiftPanelEmbed(pricing: GigPricingConfig = DEFAULT_GIG_PRICING): EmbedBuilder {
   return createBaseEmbed("🎁 GIFT IN GAME", EMBED_COLORS.gift).setDescription(
     [
       "Pesan Gamepass Roblox yang mendukung fitur gifting — tanpa perlu memiliki Robux sendiri.",
@@ -58,10 +58,9 @@ export function buildGiftPanelEmbed(): EmbedBuilder {
       "━━━━━━━━━━━━━━━━━━━━",
       "",
       `💎 **RATE**`,
-      `🌍 **Global:** 1 Robux = Rp92`,
-      `🇮🇩 **Indo:** 1 Robux = Rp95`,
+      `🌍 **Rate:** 1 Robux = ${formatIdr(pricing.rateIdr)}`,
       "",
-      `Pembayaran dibulatkan ke atas ke kelipatan Rp500.`,
+      `Pembayaran dibulatkan ke atas ke kelipatan ${formatIdr(pricing.roundingIdr)}.`,
       "",
       "━━━━━━━━━━━━━━━━━━━━",
       "",
