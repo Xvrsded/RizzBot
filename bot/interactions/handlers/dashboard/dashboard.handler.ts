@@ -1,6 +1,10 @@
 import { type ButtonInteraction, type ModalSubmitInteraction } from "discord.js";
 import type { ParsedCustomId } from "../../custom-id";
-import { parseServiceToggleId, type ServiceStatusKey } from "../../../../shared/service-status";
+import {
+  parseServiceToggleId,
+  type ServiceStatusKey,
+} from "../../../../shared/service-status";
+import type { GigRateType } from "../../../../shared/products";
 import { dashboardService } from "../../../services/dashboard.service";
 import { serviceStatusService } from "../../../services/service-status.service";
 import { guildConfigService } from "../../../services/guild-config.service";
@@ -41,7 +45,8 @@ import { parseRobuxPackages } from "../../../../shared/robux-packages";
 import { logger } from "../../../../shared/logger";
 
 const STUB_LABELS: Record<string, string> = {
-  "gig-config": "GIG Config",
+  "gig-global": "GIG Global",
+  "gig-indo": "GIG Indo",
   "mm-management": "MM Management",
   "limited-mgt": "Limited MGT",
 };
@@ -87,9 +92,10 @@ export async function handleDashboardButton(
   }
 
   if (parsed.action === "stub") {
-    if (parsed.id === "gig-config") {
+    if (parsed.id === "gig-global" || parsed.id === "gig-indo") {
       const pricing = await guildConfigService.getGigPricing(guildId);
-      await interaction.showModal(buildGigPricingModal(pricing));
+      const rateType: GigRateType = parsed.id === "gig-indo" ? "indo" : "global";
+      await interaction.showModal(buildGigPricingModal(pricing, rateType));
       return;
     }
 
@@ -202,19 +208,22 @@ export async function handleDashboardModal(
   const guildId = interaction.guild.id;
 
   if (parsed.action === "gig-pricing-save") {
+    const rateType = parsed.id === "indo" ? "indo" : parsed.id === "global" ? "global" : null;
     const { rateRaw, roundingRaw } = extractGigPricingModalInput(interaction);
     const rateIdr = parseIdrAmount(rateRaw);
     const roundingIdr = parseIdrAmount(roundingRaw);
 
-    if (rateIdr === null || roundingIdr === null) {
+    if (!rateType || rateIdr === null || roundingIdr === null) {
       await replyEmbedEphemeral(interaction, buildGigPricingInvalidEmbed());
       return;
     }
 
     await interaction.deferReply({ ephemeral: true });
 
+    const currentPricing = await guildConfigService.getGigPricing(guildId);
     const pricing = await guildConfigService.updateGigPricing(guildId, {
-      rateIdr,
+      globalRateIdr: rateType === "global" ? rateIdr : currentPricing.globalRateIdr,
+      indoRateIdr: rateType === "indo" ? rateIdr : currentPricing.indoRateIdr,
       roundingIdr,
     });
 
@@ -225,9 +234,9 @@ export async function handleDashboardModal(
 
     await dashboardService.refreshDashboard(interaction.client, guildId);
     await productPanelService.restoreGiftInGamePanel(interaction.client);
-    await interaction.editReply({ embeds: [buildGigPricingSavedEmbed(pricing)] });
+    await interaction.editReply({ embeds: [buildGigPricingSavedEmbed(pricing, rateType)] });
     logger.dashboard(
-      `GIG pricing updated by ${interaction.user.id} in guild ${guildId} (rate=${rateIdr}, rounding=${roundingIdr})`,
+      `GIG ${rateType} pricing updated by ${interaction.user.id} in guild ${guildId} (rate=${rateIdr}, rounding=${roundingIdr})`,
     );
     return;
   }

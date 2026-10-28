@@ -1,5 +1,5 @@
 import type { APIEmbedField } from "discord.js";
-import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../shared/products";
+import { DEFAULT_GIG_PRICING, type GigPriceConfig } from "../../shared/products";
 import { GIFT_PAYMENT_METHODS } from "../../shared/payment-methods";
 import { formatIdr } from "./pricing";
 const CODE_BLOCK = (content: string): string => `\`\`\`text\n${content}\n\`\`\``;
@@ -47,7 +47,10 @@ export function formatGiftPayment(
   robuxAmount: number,
   rawPrice: number,
   finalPrice: number,
-  pricing: GigPricingConfig = DEFAULT_GIG_PRICING,
+  pricing: GigPriceConfig = {
+    rateIdr: DEFAULT_GIG_PRICING.globalRateIdr,
+    roundingIdr: DEFAULT_GIG_PRICING.roundingIdr,
+  },
 ): string {
   const rateLabel = `${robuxAmount} Robux × ${formatIdr(pricing.rateIdr)}`;
   const adjustment = finalPrice - rawPrice;

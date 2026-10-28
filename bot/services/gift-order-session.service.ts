@@ -3,7 +3,8 @@ import { generateGiftOrderCode } from "../utils/order-code";
 import {
   DEFAULT_GIG_PRICING,
   GIFT_SESSION_EXPIRY_MS,
-  type GigPricingConfig,
+  type GigRateType,
+  type GigPriceConfig,
 } from "../../shared/products";
 import { calculateGiftInGamePrice } from "../utils/pricing";
 import { giftOrderSessionRepository } from "../../database/repositories/gift-order-session.repository";
@@ -12,7 +13,6 @@ import {
   type GiftOrderSessionDocument,
 } from "../../database/models/gift-order-session.model";
 import type { RobloxUserLookupResult } from "./roblox.service";
-import { guildConfigService } from "./guild-config.service";
 
 export interface GiftOrderFormInput {
   gameName: string;
@@ -27,6 +27,7 @@ export interface GiftOrderSessionPayload extends GiftOrderFormInput {
   robloxUser: RobloxUserLookupResult;
   rateIdr?: number;
   roundingIdr?: number;
+  rateType?: GigRateType;
 }
 
 export function validateGiftOrderForm(input: GiftOrderFormInput): string | null {
@@ -122,8 +123,8 @@ export const giftOrderSessionService = {
   },
 
   async createSession(payload: GiftOrderSessionPayload): Promise<GiftOrderSessionDocument> {
-    const pricingConfig: GigPricingConfig = {
-      rateIdr: payload.rateIdr ?? DEFAULT_GIG_PRICING.rateIdr,
+    const pricingConfig: GigPriceConfig = {
+      rateIdr: payload.rateIdr ?? DEFAULT_GIG_PRICING.globalRateIdr,
       roundingIdr: payload.roundingIdr ?? DEFAULT_GIG_PRICING.roundingIdr,
     };
     const pricing = calculateGiftInGamePrice(payload.robuxAmount, pricingConfig);
@@ -143,6 +144,7 @@ export const giftOrderSessionService = {
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
       rateIdr: pricingConfig.rateIdr,
+      rateType: payload.rateType ?? "global",
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });
@@ -155,7 +157,7 @@ export const giftOrderSessionService = {
     const session = await giftOrderSessionRepository.findBySessionId(sessionId);
     if (!session) return null;
     
-    const pricingConfig: GigPricingConfig = {
+    const pricingConfig: GigPriceConfig = {
       rateIdr: payload.rateIdr ?? session.rateIdr,
       roundingIdr: payload.roundingIdr ?? DEFAULT_GIG_PRICING.roundingIdr,
     };
@@ -172,6 +174,7 @@ export const giftOrderSessionService = {
       rawPrice: pricing.rawPrice,
       finalPrice: pricing.finalPrice,
       rateIdr: pricingConfig.rateIdr,
+      rateType: payload.rateType ?? session.rateType ?? "global",
       status: GiftOrderSessionStatus.PENDING,
       expiresAt: buildExpiryDate(),
     });

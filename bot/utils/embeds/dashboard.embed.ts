@@ -72,7 +72,8 @@ export function buildDashboardEmbed(
         name: "📊 SYSTEM INFORMATION",
         value: [
           `• Kategori Aktif: **${stats.activeCategories} / ${stats.totalCategories}**`,
-          `• GIG Rate: **Rp${pricing.rateIdr.toLocaleString("id-ID")} / Robux**`,
+          `• GIG Global: **Rp${pricing.globalRateIdr.toLocaleString("id-ID")} / Robux**`,
+          `• GIG Indo: **Rp${pricing.indoRateIdr.toLocaleString("id-ID")} / Robux**`,
           `• Ticket Aktif: **${stats.activeTickets}**`,
           `• Order Hari Ini: **${stats.ordersToday}**`,
           "",
@@ -112,9 +113,14 @@ export function buildDashboardRows(statuses: ServiceStatusMap): ActionRowBuilder
     ),
     new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId(buildCustomId("dashboard", "stub", "gig-config"))
-        .setLabel("GIG Config")
-        .setEmoji("⚙️")
+        .setCustomId(buildCustomId("dashboard", "stub", "gig-global"))
+        .setLabel("GIG Global")
+        .setEmoji("🌍")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(buildCustomId("dashboard", "stub", "gig-indo"))
+        .setLabel("GIG Indo")
+        .setEmoji("🇮🇩")
         .setStyle(ButtonStyle.Secondary),
       new ButtonBuilder()
         .setCustomId(buildCustomId("dashboard", "stub", "robux-packages"))

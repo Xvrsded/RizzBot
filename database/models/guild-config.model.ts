@@ -47,7 +47,8 @@ const guildConfigSchema = new Schema<GuildConfigDocument>(
     dashboardMessageId: { type: String, default: null },
     dashboardLastUpdatedAt: { type: Date, default: null },
     gigPricing: {
-      rateIdr: { type: Number, default: DEFAULT_GIG_PRICING.rateIdr },
+      globalRateIdr: { type: Number, default: DEFAULT_GIG_PRICING.globalRateIdr },
+      indoRateIdr: { type: Number, default: DEFAULT_GIG_PRICING.indoRateIdr },
       roundingIdr: { type: Number, default: DEFAULT_GIG_PRICING.roundingIdr },
     },
     robuxPackages: {

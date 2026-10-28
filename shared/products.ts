@@ -61,13 +61,23 @@ export const VOUCH_CHANNEL_ID = "1536978578460250112";
 export const GIFT_SESSION_EXPIRY_MS = 15 * 60 * 1000;
 
 export interface GigPricingConfig {
+  globalRateIdr: number;
+  indoRateIdr: number;
+  roundingIdr: number;
+}
+
+export interface GigPriceConfig {
   rateIdr: number;
   roundingIdr: number;
 }
 
-export const ROBUX_RATE_IDR = 90;
+export type GigRateType = "global" | "indo";
+
+export const ROBUX_RATE_IDR = 92;
+export const ROBUX_INDO_RATE_IDR = 95;
 export const PRICE_ROUNDING_IDR = 500;
 export const DEFAULT_GIG_PRICING: GigPricingConfig = {
-  rateIdr: ROBUX_RATE_IDR,
+  globalRateIdr: ROBUX_RATE_IDR,
+  indoRateIdr: ROBUX_INDO_RATE_IDR,
   roundingIdr: PRICE_ROUNDING_IDR,
 };

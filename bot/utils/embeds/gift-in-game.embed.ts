@@ -58,7 +58,8 @@ export function buildGiftPanelEmbed(pricing: GigPricingConfig = DEFAULT_GIG_PRIC
       "━━━━━━━━━━━━━━━━━━━━",
       "",
       `💎 **RATE**`,
-      `🌍 **Rate:** 1 Robux = ${formatIdr(pricing.rateIdr)}`,
+      `🌍 **Global:** 1 Robux = ${formatIdr(pricing.globalRateIdr)}`,
+      `🇮🇩 **Indo:** 1 Robux = ${formatIdr(pricing.indoRateIdr)}`,
       "",
       `Pembayaran dibulatkan ke atas ke kelipatan ${formatIdr(pricing.roundingIdr)}.`,
       "",
@@ -107,7 +108,7 @@ export function buildGiftOrderPreviewEmbed(data: GiftOrderEmbedData): EmbedBuild
       {
         name: "💰 RINGKASAN PEMBAYARAN",
         value: formatGiftPayment(data.robuxAmount, data.rawPrice, data.finalPrice, {
-          rateIdr: data.rateIdr ?? DEFAULT_GIG_PRICING.rateIdr,
+          rateIdr: data.rateIdr ?? DEFAULT_GIG_PRICING.globalRateIdr,
           roundingIdr: DEFAULT_GIG_PRICING.roundingIdr,
         }),
         inline: false,

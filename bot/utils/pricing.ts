@@ -1,4 +1,4 @@
-import { DEFAULT_GIG_PRICING, type GigPricingConfig } from "../../shared/products";
+import { DEFAULT_GIG_PRICING, type GigPriceConfig } from "../../shared/products";
 
 export interface GiftInGamePriceResult {
   robuxAmount: number;
@@ -8,7 +8,10 @@ export interface GiftInGamePriceResult {
 
 export function calculateGiftInGamePrice(
   robuxAmount: number,
-  pricing: GigPricingConfig = DEFAULT_GIG_PRICING,
+  pricing: GigPriceConfig = {
+    rateIdr: DEFAULT_GIG_PRICING.globalRateIdr,
+    roundingIdr: DEFAULT_GIG_PRICING.roundingIdr,
+  },
 ): GiftInGamePriceResult {
   const rawPrice = robuxAmount * pricing.rateIdr;
   const finalPrice = Math.ceil(rawPrice / pricing.roundingIdr) * pricing.roundingIdr;

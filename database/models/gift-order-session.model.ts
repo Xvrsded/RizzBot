@@ -1,5 +1,5 @@
 import { Schema, model, type Document, type Model } from "mongoose";
-import { ROBUX_RATE_IDR } from "../../shared/products";
+import { ROBUX_RATE_IDR, type GigRateType } from "../../shared/products";
 
 export enum GiftOrderSessionStatus {
   PENDING = "PENDING",
@@ -25,6 +25,7 @@ export interface IGiftOrderSession {
   rawPrice: number;
   finalPrice: number;
   rateIdr: number;
+  rateType: GigRateType;
   status: GiftOrderSessionStatus;
   expiresAt: Date;
   createdAt: Date;
@@ -49,6 +50,7 @@ const giftOrderSessionSchema = new Schema<GiftOrderSessionDocument>(
     rawPrice: { type: Number, required: true },
     finalPrice: { type: Number, required: true },
     rateIdr: { type: Number, default: ROBUX_RATE_IDR },
+    rateType: { type: String, enum: ["global", "indo"], default: "global" },
     status: {
       type: String,
       enum: Object.values(GiftOrderSessionStatus),

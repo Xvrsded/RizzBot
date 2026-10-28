@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import type { ParsedCustomId } from "../../custom-id";
 import { ProductType } from "../../../../shared/products";
+import type { GigRateType } from "../../../../shared/products";
 import { guildConfigService } from "../../../services/guild-config.service";
 import {
   giftOrderSessionService,
@@ -151,9 +152,13 @@ async function processGiftOrderForm(
     return;
   }
 
-  const pricing = await guildConfigService.getGigPricing(interaction.guild.id);
   const isSessionId = parsedId && parsedId.length > 10;
   const sessionId = isSessionId ? parsedId : undefined;
+  const session = sessionId
+    ? await giftOrderSessionService.getSession(sessionId)
+    : null;
+  const rateType: GigRateType = session?.rateType ?? (parsedId === "indo" ? "indo" : "global");
+  const pricing = await guildConfigService.getGigPricing(interaction.guild.id);
 
   const payload = {
     guildId: interaction.guild.id,
@@ -163,26 +168,27 @@ async function processGiftOrderForm(
     robuxAmount,
     robloxUsername: raw.robloxUsername,
     robloxUser,
-    rateIdr: pricing.rateIdr,
+    rateIdr: rateType === "indo" ? pricing.indoRateIdr : pricing.globalRateIdr,
     roundingIdr: pricing.roundingIdr,
+    rateType,
   };
 
-  const session = sessionId
+  const updatedSession = sessionId
     ? await giftOrderSessionService.updateSession(sessionId, payload)
     : await giftOrderSessionService.createSession(payload);
 
-  if (!session) {
+  if (!updatedSession) {
     await interaction.editReply({
       embeds: [createErrorEmbed("❌ TERJADI KESALAHAN", "Sesi pesanan tidak ditemukan atau sudah tidak valid.")],
     });
     return;
   }
 
-  const embed = buildGiftOrderPreviewEmbed(sessionToEmbedData(session));
+  const embed = buildGiftOrderPreviewEmbed(sessionToEmbedData(updatedSession));
 
   await interaction.editReply({
     embeds: [embed],
-    components: [buildOrderPreviewRow(session.sessionId)],
+    components: [buildOrderPreviewRow(updatedSession.sessionId)],
   });
 }
 

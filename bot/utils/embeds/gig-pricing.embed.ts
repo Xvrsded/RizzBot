@@ -7,19 +7,19 @@ import {
 import { buildCustomId } from "../../interactions/custom-id";
 import { createErrorEmbed, createSuccessEmbed } from "./base.embed";
 import { formatIdr } from "../pricing";
-import type { GigPricingConfig } from "../../../shared/products";
+import type { GigPricingConfig, GigRateType } from "../../../shared/products";
 
 const PRICING_FOOTER = { text: "RizzBot • GIG Config" };
 
-export function buildGigPricingModal(pricing: GigPricingConfig): ModalBuilder {
+export function buildGigPricingModal(pricing: GigPricingConfig, rateType: GigRateType): ModalBuilder {
   const rateInput = new TextInputBuilder()
     .setCustomId("gig_rate_idr")
     .setLabel("Harga per Robux (Rupiah)")
-    .setPlaceholder("Contoh: 90")
+    .setPlaceholder(rateType === "global" ? "Contoh: 92" : "Contoh: 95")
     .setStyle(TextInputStyle.Short)
     .setRequired(true)
     .setMaxLength(12)
-    .setValue(String(pricing.rateIdr));
+    .setValue(String(rateType === "global" ? pricing.globalRateIdr : pricing.indoRateIdr));
 
   const roundingInput = new TextInputBuilder()
     .setCustomId("gig_rounding_idr")
@@ -31,8 +31,8 @@ export function buildGigPricingModal(pricing: GigPricingConfig): ModalBuilder {
     .setValue(String(pricing.roundingIdr));
 
   return new ModalBuilder()
-    .setCustomId(buildCustomId("dashboard", "gig-pricing-save"))
-    .setTitle("GIG Pricing Config")
+    .setCustomId(buildCustomId("dashboard", "gig-pricing-save", rateType))
+    .setTitle(`GIG ${rateType === "global" ? "Global" : "Indo"} Config`)
     .addComponents(
       new ActionRowBuilder<TextInputBuilder>().addComponents(rateInput),
       new ActionRowBuilder<TextInputBuilder>().addComponents(roundingInput),
@@ -55,11 +55,15 @@ export function buildGigPricingInvalidEmbed(): ReturnType<typeof createErrorEmbe
   ).setFooter(PRICING_FOOTER);
 }
 
-export function buildGigPricingSavedEmbed(pricing: GigPricingConfig): ReturnType<typeof createSuccessEmbed> {
+export function buildGigPricingSavedEmbed(
+  pricing: GigPricingConfig,
+  rateType: GigRateType,
+): ReturnType<typeof createSuccessEmbed> {
   return createSuccessEmbed(
     "GIG PRICING UPDATED",
     [
-      `Harga per Robux: **${formatIdr(pricing.rateIdr)}**`,
+      `Tipe GIG: **${rateType === "global" ? "Global" : "Indo"}**`,
+      `Harga per Robux: **${formatIdr(rateType === "global" ? pricing.globalRateIdr : pricing.indoRateIdr)}**`,
       `Pembulatan: **${formatIdr(pricing.roundingIdr)}**`,
       "",
       "Panel GIG dan perhitungan order baru telah diperbarui.",

@@ -10,7 +10,8 @@ import {
 export const guildConfigService = {
   normalizeGigPricing(config: GuildConfigDocument | null): GigPricingConfig {
     return {
-      rateIdr: config?.gigPricing?.rateIdr ?? DEFAULT_GIG_PRICING.rateIdr,
+      globalRateIdr: config?.gigPricing?.globalRateIdr ?? DEFAULT_GIG_PRICING.globalRateIdr,
+      indoRateIdr: config?.gigPricing?.indoRateIdr ?? DEFAULT_GIG_PRICING.indoRateIdr,
       roundingIdr: config?.gigPricing?.roundingIdr ?? DEFAULT_GIG_PRICING.roundingIdr,
     };
   },
