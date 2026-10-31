@@ -42,6 +42,10 @@ import { createErrorEmbed } from "../../../utils/embeds/base.embed";
 import { guardServiceOrderAvailable } from "../../../utils/service-order-guard";
 import { logger } from "../../../../shared/logger";
 
+function isGigRateType(value: string | undefined): value is GigRateType {
+  return value === "global" || value === "indo";
+}
+
 function sessionToEmbedData(session: {
   orderCode: string;
   gameName: string;
@@ -152,7 +156,7 @@ async function processGiftOrderForm(
     return;
   }
 
-  const isSessionId = parsedId && parsedId.length > 10;
+  const isSessionId = parsedId !== undefined && !isGigRateType(parsedId);
   const sessionId = isSessionId ? parsedId : undefined;
   const session = sessionId
     ? await giftOrderSessionService.getSession(sessionId)
@@ -442,7 +446,7 @@ export async function handleGiftModal(
     return;
   }
 
-  if (parsed.id) {
+  if (parsed.id && !isGigRateType(parsed.id)) {
     const session = await giftOrderSessionService.getSession(parsed.id);
 
     if (!session || session.userId !== interaction.user.id) {
